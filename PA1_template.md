@@ -11,14 +11,16 @@ output: html_document
 
 **Read the Data from the zip file.**
 
-```{r}
+
+```r
 unzip("repdata_data_activity.zip")
 activity<-read.csv("activity.csv") ##,stringsAsFactors=FALSE
 ```
 
 **Now the NA missing values should be ignored from the data.**
 
-```{r}
+
+```r
 StepsPrsnt <- complete.cases(activity)
 nMissing <- length(StepsPrsnt[StepsPrsnt==FALSE])
 nComplete <- length(StepsPrsnt[StepsPrsnt==TRUE])
@@ -26,23 +28,45 @@ nComplete <- length(StepsPrsnt[StepsPrsnt==TRUE])
 
 **Now remove the missing values from the data set.**
 
-```{r}
+
+```r
 stepsComplete<-subset(activity,complete.cases(activity)==TRUE)
 ```
 
 **What is mean total number of steps taken per day?**
 
-```{r}
+
+```r
 splitByDay<-split(stepsComplete,stepsComplete$date, drop=TRUE)
 dailySteps<-sapply(splitByDay, function(x) sum(x$steps))
 print(summary(dailySteps))
+```
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##      41    8841   10760   10770   13290   21190
+```
+
+```r
 print(mean(dailySteps))
+```
+
+```
+## [1] 10766.19
+```
+
+```r
 print(median(dailySteps))
+```
+
+```
+## [1] 10765
 ```
 
 **Make a histogram of the total number of steps taken each day.**
 
-```{r}
+
+```r
 hist(dailySteps, main="Total Steps per Day", xlab="No Of Steps", col="red")
 abline(v=mean(dailySteps), lty=3, col="blue") 
 abline(v=median(dailySteps), lty=4, col="green")
@@ -52,11 +76,14 @@ text(median(dailySteps),23,labels="median", pos=4, col="green")
 rug(dailySteps, col="black") 
 ```
 
+![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5-1.png) 
+
 **What is the average daily activity pattern?**
 
 * The time-series plot is computed by having 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
 
-```{r}
+
+```r
 splitByInterval <- split(stepsComplete,stepsComplete$interval, drop=TRUE)
 avgInterval <- sapply(splitByInterval, function(x) mean(x$steps))
 plot(avgInterval, type="l",  
@@ -68,11 +95,25 @@ text(which.max(avgInterval),max(avgInterval),
      pos=4, col="blue") 
 ```
 
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6-1.png) 
+
 **5-minute interval which contains the maximum number of steps.**
 
-```{r}
+
+```r
 print(names(which.max(avgInterval)))
+```
+
+```
+## [1] "835"
+```
+
+```r
 print(round(max(avgInterval)) )
+```
+
+```
+## [1] 206
 ```
 
 **Imputing missing values.**
@@ -81,7 +122,8 @@ print(round(max(avgInterval)) )
 
 **The missing values will be imputed using the mean across all days for the 5-minute interval.**
 
-```{r}
+
+```r
 newActivity <- cbind(activity,StepsPrsnt) # newData, with 'StepsPrsnt' column  
 splitByOrig<-split(newActivity,newActivity$StepsPrsnt, drop=TRUE) 
 for (row in 1:nrow(splitByOrig[["FALSE"]])){  
@@ -94,7 +136,8 @@ newActivity <- newActivity[with(newActivity, order(date, interval)), ]
 
 **Make a histogram of the total number of steps taken each day with the new data set.**
 
-```{r}
+
+```r
 splitNewByDay <- split(newActivity,newActivity$date, drop=TRUE)# split the newActivity by date  
 dailyStepsNew <- sapply(splitNewByDay, function(x) sum(x$steps))  
 hist(dailyStepsNew, main="NEW Hist: Total Steps per Day", xlab="         # Steps", col="red") 
@@ -106,6 +149,8 @@ text(median(dailySteps),33,labels="median", pos=4, col="green") # label the medi
 rug(dailyStepsNew,col="black")
 ```
 
+![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9-1.png) 
+
 **Summary,Mean and Median of new daily steps after imputing the missing values.**
 
 * There is not much difference in these values when compared to ignoring NA values.
@@ -114,10 +159,30 @@ rug(dailyStepsNew,col="black")
 histogram the frequency is higher as compared to the frequency of the old histogram 
 which ignored missing values.**
 
-```{r}
+
+```r
 print(summary(dailyStepsNew))
+```
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##      41    9819   10760   10770   12810   21190
+```
+
+```r
 print(mean(dailyStepsNew))
+```
+
+```
+## [1] 10765.64
+```
+
+```r
 print(median(dailyStepsNew))
+```
+
+```
+## [1] 10762
 ```
 
 **Are there differences in activity patterns between weekdays and weekends?.**
@@ -126,7 +191,8 @@ print(median(dailyStepsNew))
 
 * First create a factor variable and then create a panel plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis).
 
-```{r}
+
+```r
 newActivity$date <- as.Date(strptime(newActivity$date, format="%Y-%m-%d")) 
 # convert date to a date() class variable  
 newActivity$day <- factor(format(newActivity$date, "%A")) 
@@ -135,6 +201,13 @@ levels(newActivity$day) <- list(weekday = c("Monday", "Tuesday",
                                              "Thursday", "Friday"),
                                  weekend = c("Saturday", "Sunday"))
 levels(newActivity$day)
+```
+
+```
+## [1] "weekday" "weekend"
+```
+
+```r
 ## aggregate newData by steps as a function of interval + day  
 stepsByDay <- aggregate(newActivity$steps ~ newActivity$interval + newActivity$day, newActivity, mean)
 
@@ -145,3 +218,6 @@ p<-xyplot(stepsByDay$steps ~ stepsByDay$interval | stepsByDay$day,
        layout = c(1, 2), type = "l", 
        xlab = "Interval", ylab = "Number of steps")
 print(p)
+```
+
+![plot of chunk unnamed-chunk-11](figure/unnamed-chunk-11-1.png) 
